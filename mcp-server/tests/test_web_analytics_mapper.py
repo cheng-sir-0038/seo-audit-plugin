@@ -9,6 +9,33 @@ from codex_seo_mcp.errors import SeoDataError, SeoDataErrorCode
 
 
 class WebAnalyticsMapperTests(unittest.TestCase):
+    def test_empty_report_accepts_google_empty_total_without_inventing_values(self) -> None:
+        for row_count in ({}, {"rowCount": 0}):
+            with self.subTest(row_count=row_count):
+                period = WebAnalyticsMapper().map_period(
+                    {"metricHeaders": [{"name": "sessions"}], "totals": [{}], **row_count},
+                    start_date="2026-08-01",
+                    end_date="2026-08-28",
+                    expected_dimensions=(),
+                    expected_metrics=("sessions",),
+                )
+                self.assertEqual(period.row_count, 0)
+                self.assertEqual(period.rows, [])
+                self.assertEqual(period.totals, {})
+
+    def test_empty_total_with_nonempty_report_remains_invalid(self) -> None:
+        for rows, row_count in (([], 1), ([{"metricValues": [{"value": "1"}]}], 1)):
+            with self.subTest(rows=rows), self.assertRaises(SeoDataError) as caught:
+                WebAnalyticsMapper().map_period(
+                    {"metricHeaders": [{"name": "sessions"}], "rows": rows,
+                     "totals": [{}], "rowCount": row_count},
+                    start_date="2026-08-01",
+                    end_date="2026-08-28",
+                    expected_dimensions=(),
+                    expected_metrics=("sessions",),
+                )
+            self.assertEqual(caught.exception.code, "invalid_response")
+
     def test_header_mismatch_errors_do_not_expose_provider_names(self) -> None:
         for field in ("dimensionHeaders", "metricHeaders"):
             for name in ("private-header-value", {"private-header-value": 1}, ["private-header-value"]):

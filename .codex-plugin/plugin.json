@@ -1,6 +1,6 @@
 {
   "name": "seo-audit-plugin",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Evidence-driven SEO audit and diagnosis workflows with structured handoff for Codex.",
   "author": {
     "name": "Chengpeng"

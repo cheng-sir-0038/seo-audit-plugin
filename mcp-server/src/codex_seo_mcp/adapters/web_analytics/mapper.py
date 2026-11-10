@@ -79,9 +79,11 @@ class WebAnalyticsMapper:
                 )
             )
 
+        row_count = _row_count(payload, rows)
         totals: dict[str, float] = {}
         total_rows = _optional_list(payload, "totals")
-        if total_rows:
+        # GA4 can return one empty aggregate object when the report has no matching rows.
+        if total_rows and not (row_count == 0 and total_rows == [{}]):
             if len(total_rows) != 1 or not isinstance(total_rows[0], dict):
                 raise _invalid_response("GA4 totals 结构无效")
             metric_values = _row_values(
@@ -99,7 +101,6 @@ class WebAnalyticsMapper:
                 if name
             }
 
-        row_count = _row_count(payload, rows)
         return WebAnalyticsPeriod(
             start_date=start_date,
             end_date=end_date,
