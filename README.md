@@ -15,6 +15,7 @@
 
 ```text
 plugin.json / .codex-plugin/   插件声明与 Codex 入口
+.agents/workflows/            开发 Agent 的协作与诊断流程索引
 skills/                       不同 SEO 问题的处理步骤
 references/                   运行时需要的判断规则
 mcp.json / .mcp.json          MCP 服务启动配置
