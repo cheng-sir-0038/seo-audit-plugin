@@ -269,7 +269,10 @@ class FakeIpResolutionTests(unittest.IsolatedAsyncioTestCase):
         thread = threading.Thread(target=serve, daemon=True)
         thread.start()
         with (
-            patch("codex_seo_mcp.clients.page_html.getproxies", return_value={"http": f"http://127.0.0.1:{port}"}),
+            patch(
+                "codex_seo_mcp.clients.page_html.getproxies",
+                return_value={"http": f"http://test:password@127.0.0.1:{port}"},
+            ),
             patch("codex_seo_mcp.clients.page_html.proxy_bypass", return_value=False),
         ):
             response = await UrllibTransport().get(
@@ -279,6 +282,8 @@ class FakeIpResolutionTests(unittest.IsolatedAsyncioTestCase):
         thread.join(timeout=2)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(received[0].startswith(b"CONNECT 93.184.216.34:80 "))
+        self.assertIn(b"Proxy-Authorization: Basic dGVzdDpwYXNzd29yZA==\r\n", received[0])
+        self.assertNotIn(b"Proxy-Authorization", received[1])
         self.assertIn(b"Host: example.com\r\n", received[1])
 
     async def test_unsupported_proxy_does_not_bypass_address_pinning(self) -> None:
