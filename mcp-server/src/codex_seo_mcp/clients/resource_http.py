@@ -51,10 +51,7 @@ class ResourceHttpClient:
 
         for redirect_count in range(self.config.max_redirects + 1):
             pinned = await self._assert_public_target(current)
-            response = (
-                await self.transport.get(current, config=self.config, pinned_addresses=pinned)
-                if pinned is not None else await self.transport.get(current, config=self.config)
-            )
+            response = await self.transport.get(current, config=self.config, pinned_addresses=pinned)
 
             location = response.headers.get("location")
             if 300 <= response.status_code < 400 and location:
@@ -84,5 +81,5 @@ class ResourceHttpClient:
 
         raise SeoDataError(SeoDataErrorCode.INVALID_RESPONSE, "SEO resource 重定向处理失败")
 
-    async def _assert_public_target(self, url: str) -> list[str] | None:
+    async def _assert_public_target(self, url: str) -> list[str]:
         return await validate_public_target(url, self.resolver, capability="ResourceInspection")

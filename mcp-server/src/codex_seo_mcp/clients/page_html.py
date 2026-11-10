@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import http.client
 import ipaddress
 import json
@@ -9,12 +10,9 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Protocol
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin, urlparse
+from urllib.parse import unquote, urlencode, urljoin, urlparse
 from urllib.request import (
-    HTTPRedirectHandler,
     Request,
-    build_opener,
     getproxies,
     proxy_bypass,
     urlopen,
@@ -79,26 +77,17 @@ class HttpTransport(Protocol):
     """HTTP 实现 seam，方便测试时用假的网络响应验证业务边界。"""
 
     async def get(
-        self, url: str, *, config: PageHtmlConfig, pinned_addresses: list[str] | None = None
+        self, url: str, *, config: PageHtmlConfig, pinned_addresses: list[str]
     ) -> RawHttpResponse: ...
-
-
-class _NoRedirect(HTTPRedirectHandler):
-    """关闭 urllib 自动跳转，让每一次跳转都重新经过安全边界检查。"""
-
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
-        return None
 
 
 class UrllibTransport:
     """基于标准库的默认 HTTP Transport。"""
 
     async def get(
-        self, url: str, *, config: PageHtmlConfig, pinned_addresses: list[str] | None = None
+        self, url: str, *, config: PageHtmlConfig, pinned_addresses: list[str]
     ) -> RawHttpResponse:
-        if pinned_addresses is not None:
-            return await asyncio.to_thread(self._get_pinned_sync, url, config, pinned_addresses)
-        return await asyncio.to_thread(self._get_sync, url, config)
+        return await asyncio.to_thread(self._get_pinned_sync, url, config, pinned_addresses)
 
     @staticmethod
     def _get_pinned_sync(
@@ -108,12 +97,24 @@ class UrllibTransport:
         host = parsed.hostname or ""
         if not addresses or any(_is_private_address(address) for address in addresses):
             raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, "目标地址不是公网地址")
-        if getproxies().get(parsed.scheme) and not proxy_bypass(host):
-            # shortcut: no pinned proxy tunnel; add one if explicit proxy support is needed.
-            raise SeoDataError(
-                SeoDataErrorCode.PROVIDER_UNAVAILABLE,
-                "Fake-IP 环境中的显式 HTTP 代理暂不支持安全固定目标地址。",
-            )
+        proxy_url = getproxies().get(parsed.scheme)
+        proxy = None
+        proxy_headers: dict[str, str] = {}
+        if proxy_url and not proxy_bypass(host):
+            proxy = urlparse(proxy_url if "://" in proxy_url else f"http://{proxy_url}")
+            try:
+                valid_proxy = proxy.scheme == "http" and proxy.hostname and proxy.port != 0
+            except ValueError:
+                valid_proxy = False
+            if not valid_proxy:
+                raise SeoDataError(
+                    SeoDataErrorCode.PROVIDER_UNAVAILABLE,
+                    "只支持通过 HTTP 代理建立安全 CONNECT 隧道。",
+                )
+            if proxy.username is not None:
+                credentials = f"{unquote(proxy.username)}:{unquote(proxy.password or '')}"
+                token = base64.b64encode(credentials.encode("utf-8")).decode("ascii")
+                proxy_headers["Proxy-Authorization"] = f"Basic {token}"
         deadline = time.monotonic() + config.request_timeout_seconds
         last_error: Exception | None = None
         for address in addresses:
@@ -124,12 +125,25 @@ class UrllibTransport:
                 http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
             )
             connection = connection_type(host, port=parsed.port, timeout=remaining)
-            # Keep the original host for HTTP Host and TLS SNI while connecting to a verified IP.
-            connection._create_connection = (
-                lambda target, timeout, source_address, ip=address: socket.create_connection(
-                    (ip, target[1]), timeout, source_address
+            def connect(target, timeout, source_address, ip=address):
+                if proxy is None:
+                    return socket.create_connection((ip, target[1]), timeout, source_address)
+                tunnel = http.client.HTTPConnection(
+                    proxy.hostname, proxy.port or 80, timeout=timeout, source_address=source_address
                 )
-            )
+                try:
+                    tunnel.set_tunnel(ip, target[1], headers=proxy_headers)
+                    tunnel.connect()
+                    sock = tunnel.sock
+                    if sock is None:
+                        raise OSError("代理未建立隧道")
+                    tunnel.sock = None
+                    return sock
+                finally:
+                    tunnel.close()
+
+            # Keep the original host for HTTP Host and TLS SNI while connecting to a verified IP.
+            connection._create_connection = connect
             try:
                 path = parsed.path or "/"
                 if parsed.query:
@@ -150,35 +164,6 @@ class UrllibTransport:
         raise SeoDataError(
             SeoDataErrorCode.PROVIDER_UNAVAILABLE, "无法连接经过校验的公网地址"
         ) from last_error
-
-    @staticmethod
-    def _get_sync(url: str, config: PageHtmlConfig) -> RawHttpResponse:
-        opener = build_opener(_NoRedirect())
-        request = Request(
-            url,
-            headers={
-                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
-                "User-Agent": config.user_agent,
-            },
-        )
-        try:
-            with opener.open(request, timeout=config.request_timeout_seconds) as response:
-                status = int(response.status)
-                headers = {str(k).lower(): str(v) for k, v in response.headers.items()}
-                header_values = _collect_header_values(response.headers)
-                body = _read_limited(response, config.max_response_bytes)
-                return RawHttpResponse(status, headers, body, header_values=header_values)
-        except HTTPError as exc:
-            # 业务说明：关闭自动重定向后，urllib 会把 3xx 作为 HTTPError 抛出；
-            # 它仍然是有效 HTTP 响应，需要继续读取 Location 后自行处理。
-            headers = {str(k).lower(): str(v) for k, v in exc.headers.items()}
-            header_values = _collect_header_values(exc.headers)
-            body = _read_limited(exc, config.max_response_bytes)
-            return RawHttpResponse(int(exc.code), headers, body, header_values=header_values)
-        except URLError as exc:
-            raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, f"页面请求失败：{exc.reason}") from exc
-        except TimeoutError as exc:
-            raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, "页面请求超时") from exc
 
 
 def _read_limited(response, limit: int) -> bytes:  # noqa: ANN001
@@ -251,7 +236,7 @@ def _query_public_dns(host: str, record_type: str) -> list[str]:
 
 async def validate_public_target(
     url: str, resolver: Resolver, *, capability: str
-) -> list[str] | None:
+) -> list[str]:
     host = (urlparse(url).hostname or "").lower().rstrip(".")
     if (
         host == "localhost"
@@ -270,7 +255,7 @@ async def validate_public_target(
         addresses = await resolve_fake_ip(host)
     if not addresses or any(_is_private_address(address) for address in addresses):
         raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, f"{capability} 默认不允许访问本机或私有网络")
-    return addresses if fallback else None
+    return addresses
 
 
 class PageHtmlClient:
@@ -302,10 +287,7 @@ class PageHtmlClient:
             # 安全边界：公开 URL 工具不能因为运行在用户机器/公司网络里，就获得访问
             # localhost、云 metadata 或企业内网的隐式能力；每一次重定向都重新校验。
             pinned = await self._assert_public_target(current)
-            response = (
-                await self.transport.get(current, config=self.config, pinned_addresses=pinned)
-                if pinned is not None else await self.transport.get(current, config=self.config)
-            )
+            response = await self.transport.get(current, config=self.config, pinned_addresses=pinned)
 
             location = response.headers.get("location")
             if response.status_code in HTTP_REDIRECT_STATUS_CODES and location:
@@ -351,7 +333,7 @@ class PageHtmlClient:
 
         raise SeoDataError(SeoDataErrorCode.INVALID_RESPONSE, "页面重定向处理失败")
 
-    async def _assert_public_target(self, url: str) -> list[str] | None:
+    async def _assert_public_target(self, url: str) -> list[str]:
         """确认当前 URL 解析到的所有地址都属于可访问公网范围。"""
         return await validate_public_target(url, self.resolver, capability="PageInspection")
 

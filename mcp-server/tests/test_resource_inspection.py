@@ -14,7 +14,7 @@ class FakeTransport:
     def __init__(self, responses: dict[str, RawHttpResponse]) -> None:
         self.responses = responses
 
-    async def get(self, url: str, *, config) -> RawHttpResponse:  # noqa: ANN001
+    async def get(self, url: str, *, config, pinned_addresses) -> RawHttpResponse:  # noqa: ANN001
         return self.responses[url]
 
 

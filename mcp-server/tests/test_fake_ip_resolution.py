@@ -36,6 +36,22 @@ class FixtureTransport:
 
 
 class FakeIpResolutionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_public_dns_answers_are_pinned_for_page_and_resource(self) -> None:
+        async def public_resolver(_host: str) -> list[str]:
+            return ["93.184.216.34"]
+
+        transport = FixtureTransport({
+            "http://example.com/": RawHttpResponse(200, {"content-type": "text/html"}, b"<title>OK</title>"),
+            "http://example.com/robots.txt": RawHttpResponse(200, {"content-type": "text/plain"}, b"User-agent: *"),
+        })
+        await PageHtmlClient(resolver=public_resolver, transport=transport).fetch("http://example.com/")
+        await ResourceHttpClient(resolver=public_resolver, transport=transport).fetch("http://example.com/robots.txt")
+
+        self.assertEqual(transport.calls, [
+            ("http://example.com/", ["93.184.216.34"]),
+            ("http://example.com/robots.txt", ["93.184.216.34"]),
+        ])
+
     async def test_doh_reads_a_and_aaaa_answers(self) -> None:
         def dns_response(request, *, timeout):
             record_type = parse_qs(urlparse(request.full_url).query)["type"][0]
@@ -191,9 +207,83 @@ class FakeIpResolutionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(b"Host: example.com\r\n", received[0])
         self.assertIn(b"GET /robots.txt HTTP/1.1\r\n", received[0])
 
-    async def test_explicit_proxy_does_not_bypass_address_pinning(self) -> None:
+    async def test_page_fetch_does_not_resolve_the_host_twice(self) -> None:
+        listener = socket.socket()
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+        server_port = listener.getsockname()[1]
+        original_resolve = socket.getaddrinfo
+        original_connect = socket.create_connection
+        queries: list[str] = []
+        targets: list[tuple[str, int]] = []
+
+        def resolve(host, *args, **kwargs):
+            if host == "example.com":
+                queries.append(host)
+                host = "93.184.216.34" if len(queries) == 1 else "127.0.0.1"
+            return original_resolve(host, *args, **kwargs)
+
+        def connect(target, timeout, source_address):
+            targets.append(target)
+            return original_connect(("127.0.0.1", server_port), timeout, source_address)
+
+        def serve():
+            with listener, listener.accept()[0] as client:
+                client.recv(4096)
+                client.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
+                               b"Content-Length: 2\r\n\r\nOK")
+
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
         with (
-            patch("codex_seo_mcp.clients.page_html.getproxies", return_value={"https": "http://127.0.0.1:7890"}),
+            patch("codex_seo_mcp.clients.page_html.getproxies", return_value={}),
+            patch("socket.getaddrinfo", side_effect=resolve),
+            patch("socket.create_connection", side_effect=connect),
+        ):
+            result = await PageHtmlClient().fetch("http://example.com/")
+        thread.join(timeout=2)
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(queries, ["example.com"])
+        self.assertEqual(targets, [("93.184.216.34", 80)])
+
+    async def test_explicit_proxy_tunnels_to_verified_ip_and_keeps_host_header(self) -> None:
+        listener = socket.socket()
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+        port = listener.getsockname()[1]
+        received: list[bytes] = []
+
+        def serve():
+            with listener, listener.accept()[0] as client:
+                data = b""
+                while b"\r\n\r\n" not in data:
+                    data += client.recv(4096)
+                received.append(data)
+                client.sendall(b"HTTP/1.0 200 Connection Established\r\n\r\n")
+                data = b""
+                while b"\r\n\r\n" not in data:
+                    data += client.recv(4096)
+                received.append(data)
+                client.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK")
+
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        with (
+            patch("codex_seo_mcp.clients.page_html.getproxies", return_value={"http": f"http://127.0.0.1:{port}"}),
+            patch("codex_seo_mcp.clients.page_html.proxy_bypass", return_value=False),
+        ):
+            response = await UrllibTransport().get(
+                "http://example.com/robots.txt", config=PageHtmlConfig(),
+                pinned_addresses=["93.184.216.34"],
+            )
+        thread.join(timeout=2)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(received[0].startswith(b"CONNECT 93.184.216.34:80 "))
+        self.assertIn(b"Host: example.com\r\n", received[1])
+
+    async def test_unsupported_proxy_does_not_bypass_address_pinning(self) -> None:
+        with (
+            patch("codex_seo_mcp.clients.page_html.getproxies", return_value={"https": "socks5://127.0.0.1:7890"}),
             patch("codex_seo_mcp.clients.page_html.proxy_bypass", return_value=False),
             self.assertRaises(SeoDataError) as caught,
         ):

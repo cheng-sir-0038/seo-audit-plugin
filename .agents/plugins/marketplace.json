@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "seo-audit-plugin",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "source": {
         "source": "local",
         "path": "./"

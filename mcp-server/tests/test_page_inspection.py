@@ -18,7 +18,7 @@ class FakeTransport:
         self.responses = responses
         self.requested_urls: list[str] = []
 
-    async def get(self, url: str, *, config) -> RawHttpResponse:  # noqa: ANN001
+    async def get(self, url: str, *, config, pinned_addresses) -> RawHttpResponse:  # noqa: ANN001
         self.requested_urls.append(url)
         try:
             return self.responses[url]

@@ -17,7 +17,7 @@ class FixtureTransport:
         self.responses = responses
         self.requests: list[str] = []
 
-    async def get(self, url: str, *, config) -> RawHttpResponse:
+    async def get(self, url: str, *, config, pinned_addresses) -> RawHttpResponse:
         self.requests.append(url)
         if url not in self.responses:
             raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, "fixture unavailable")

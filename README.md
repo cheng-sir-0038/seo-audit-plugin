@@ -38,12 +38,12 @@ evals/                        本地确定性评测
 需要 uv 0.12.9；插件使用 Python 3.11.16 和锁定的依赖。首次运行时 uv 可能需要下载 Python 和依赖。
 
 ```bash
-codex plugin marketplace add /absolute/path/to/seo-audit-plugin
+codex plugin marketplace add https://github.com/cheng-sir-0038/seo-audit-plugin.git --ref main
 codex plugin add seo-audit-plugin@seo-audit-plugin
 codex plugin list --json
 ```
 
-也可以通过支持对应插件和 MCP 能力的其他 Agent Host 接入。不同宿主的加载方式与交互能力需要分别确认。
+也可以先克隆仓库，再把第一条命令中的地址替换为本地绝对路径；其他支持对应插件和 MCP 能力的 Agent Host 也可接入，但其加载方式与交互能力需要分别确认。
 
 ## 数据来源和配置
 
@@ -68,7 +68,7 @@ uv run --locked python ../evals/run_local.py
 
 - 数据来源各有边界：GA4 不证明关键词排名，第三方预估不等同于 GSC 数据。
 - 页面和资源检查拒绝本机、私网及特殊地址。当系统 DNS 只返回 Fake-IP 时，插件会向 Google Public DNS 的 HTTPS 接口查询目标域名，校验返回的公网地址，并固定连接到该地址，同时保留原域名的 HTTPS 证书校验；不会修改系统代理或 DNS 设置。
-- Fake-IP 兼容需要访问 Google Public DNS。若当前目标还使用显式 HTTP 代理，插件会拒绝这一兼容路径，避免绕过代理或让代理解析到未经校验的地址。
+- Fake-IP 兼容需要访问 Google Public DNS。显式 HTTP 代理必须支持对已校验 IP 建立 CONNECT 隧道；暂不支持 SOCKS 或 HTTPS 代理，无法建立安全隧道时会拒绝请求。
 - 某些外部接口需要额外授权或产生费用；数据不足时应明确说明。
 
 ## 许可证
