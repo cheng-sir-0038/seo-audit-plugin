@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 from codex_seo_mcp.clients.page_html import (
     HttpTransport,
     PageHtmlConfig,
     UrllibTransport,
     _charset_from_content_type,
-    _is_private_address,
-    _looks_like_ip,
     _normalize_url,
     default_resolver,
+    validate_public_target,
 )
 from codex_seo_mcp.errors import SeoDataError, SeoDataErrorCode
 
@@ -51,8 +50,11 @@ class ResourceHttpClient:
         redirect_chain = [requested]
 
         for redirect_count in range(self.config.max_redirects + 1):
-            await self._assert_public_target(current)
-            response = await self.transport.get(current, config=self.config)
+            pinned = await self._assert_public_target(current)
+            response = (
+                await self.transport.get(current, config=self.config, pinned_addresses=pinned)
+                if pinned is not None else await self.transport.get(current, config=self.config)
+            )
 
             location = response.headers.get("location")
             if 300 <= response.status_code < 400 and location:
@@ -82,14 +84,5 @@ class ResourceHttpClient:
 
         raise SeoDataError(SeoDataErrorCode.INVALID_RESPONSE, "SEO resource 重定向处理失败")
 
-    async def _assert_public_target(self, url: str) -> None:
-        parsed = urlparse(url)
-        host = (parsed.hostname or "").lower()
-        if host == "localhost" or host.endswith(".localhost") or host.endswith(".local"):
-            raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, "ResourceInspection 默认不允许访问本机或私有网络")
-
-        addresses = [host] if _looks_like_ip(host) else await self.resolver(host)
-        if not addresses:
-            raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, f"目标域名没有可用地址：{host}")
-        if any(_is_private_address(address) for address in addresses):
-            raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, "ResourceInspection 默认不允许访问本机或私有网络")
+    async def _assert_public_target(self, url: str) -> list[str] | None:
+        return await validate_public_target(url, self.resolver, capability="ResourceInspection")

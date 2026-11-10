@@ -1,6 +1,6 @@
 [project]
 name = "codex-seo-mcp"
-version = "0.2.3"
+version = "0.2.4"
 description = "Portable SEO data capabilities for SEO Audit Plugin."
 requires-python = ">=3.11.16,<3.12"
 dependencies = [

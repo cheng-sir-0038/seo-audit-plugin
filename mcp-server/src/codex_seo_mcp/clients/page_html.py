@@ -1,13 +1,24 @@
 from __future__ import annotations
 
 import asyncio
+import http.client
 import ipaddress
+import json
 import socket
+import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, Protocol
+from typing import Protocol
 from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin, urlparse
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.parse import urlencode, urljoin, urlparse
+from urllib.request import (
+    HTTPRedirectHandler,
+    Request,
+    build_opener,
+    getproxies,
+    proxy_bypass,
+    urlopen,
+)
 
 from codex_seo_mcp.errors import SeoDataError, SeoDataErrorCode
 
@@ -67,7 +78,9 @@ class FetchedPage:
 class HttpTransport(Protocol):
     """HTTP 实现 seam，方便测试时用假的网络响应验证业务边界。"""
 
-    async def get(self, url: str, *, config: PageHtmlConfig) -> RawHttpResponse: ...
+    async def get(
+        self, url: str, *, config: PageHtmlConfig, pinned_addresses: list[str] | None = None
+    ) -> RawHttpResponse: ...
 
 
 class _NoRedirect(HTTPRedirectHandler):
@@ -80,8 +93,63 @@ class _NoRedirect(HTTPRedirectHandler):
 class UrllibTransport:
     """基于标准库的默认 HTTP Transport。"""
 
-    async def get(self, url: str, *, config: PageHtmlConfig) -> RawHttpResponse:
+    async def get(
+        self, url: str, *, config: PageHtmlConfig, pinned_addresses: list[str] | None = None
+    ) -> RawHttpResponse:
+        if pinned_addresses is not None:
+            return await asyncio.to_thread(self._get_pinned_sync, url, config, pinned_addresses)
         return await asyncio.to_thread(self._get_sync, url, config)
+
+    @staticmethod
+    def _get_pinned_sync(
+        url: str, config: PageHtmlConfig, addresses: list[str]
+    ) -> RawHttpResponse:
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        if not addresses or any(_is_private_address(address) for address in addresses):
+            raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, "目标地址不是公网地址")
+        if getproxies().get(parsed.scheme) and not proxy_bypass(host):
+            # shortcut: no pinned proxy tunnel; add one if explicit proxy support is needed.
+            raise SeoDataError(
+                SeoDataErrorCode.PROVIDER_UNAVAILABLE,
+                "Fake-IP 环境中的显式 HTTP 代理暂不支持安全固定目标地址。",
+            )
+        deadline = time.monotonic() + config.request_timeout_seconds
+        last_error: Exception | None = None
+        for address in addresses:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            connection_type = (
+                http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
+            )
+            connection = connection_type(host, port=parsed.port, timeout=remaining)
+            # Keep the original host for HTTP Host and TLS SNI while connecting to a verified IP.
+            connection._create_connection = (
+                lambda target, timeout, source_address, ip=address: socket.create_connection(
+                    (ip, target[1]), timeout, source_address
+                )
+            )
+            try:
+                path = parsed.path or "/"
+                if parsed.query:
+                    path += f"?{parsed.query}"
+                connection.request("GET", path, headers={
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
+                    "User-Agent": config.user_agent,
+                })
+                response = connection.getresponse()
+                headers = {str(k).lower(): str(v) for k, v in response.headers.items()}
+                header_values = _collect_header_values(response.headers)
+                body = _read_limited(response, config.max_response_bytes)
+                return RawHttpResponse(int(response.status), headers, body, header_values)
+            except (OSError, http.client.HTTPException) as exc:
+                last_error = exc
+            finally:
+                connection.close()
+        raise SeoDataError(
+            SeoDataErrorCode.PROVIDER_UNAVAILABLE, "无法连接经过校验的公网地址"
+        ) from last_error
 
     @staticmethod
     def _get_sync(url: str, config: PageHtmlConfig) -> RawHttpResponse:
@@ -148,6 +216,63 @@ async def default_resolver(host: str) -> list[str]:
         raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, f"无法解析目标域名：{host}") from exc
 
 
+async def resolve_fake_ip(host: str) -> list[str]:
+    """Resolve public A/AAAA records when the system supplies a Fake-IP address."""
+    # shortcut: one public DNS service; add configurable providers if it is unavailable.
+    answers = await asyncio.gather(*(
+        asyncio.to_thread(_query_public_dns, host, record_type) for record_type in ("A", "AAAA")
+    ))
+    addresses = list(dict.fromkeys(address for group in answers for address in group))
+    if not addresses:
+        raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, "公网 DNS 未返回目标地址")
+    return addresses
+
+
+def _query_public_dns(host: str, record_type: str) -> list[str]:
+    query = urlencode({"name": host, "type": record_type})
+    request = Request(f"https://dns.google/resolve?{query}", headers={"Accept": "application/dns-json"})
+    try:
+        with urlopen(request, timeout=5) as response:
+            body = response.read(65_537)
+        if len(body) > 65_536:
+            raise ValueError("DNS response too large")
+        data = json.loads(body)
+        if not isinstance(data, dict) or data.get("Status") != 0:
+            raise ValueError("DNS lookup unsuccessful")
+        expected_type = 1 if record_type == "A" else 28
+        return [
+            str(item["data"])
+            for item in data.get("Answer", [])
+            if isinstance(item, dict) and item.get("type") == expected_type and "data" in item
+        ]
+    except (OSError, ValueError, TypeError) as exc:
+        raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, "公网 DNS 查询失败") from exc
+
+
+async def validate_public_target(
+    url: str, resolver: Resolver, *, capability: str
+) -> list[str] | None:
+    host = (urlparse(url).hostname or "").lower().rstrip(".")
+    if (
+        host == "localhost"
+        or host.endswith((".localhost", ".local", ".internal", ".lan", ".home.arpa"))
+        or ("." not in host and not _looks_like_ip(host))
+    ):
+        raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, f"{capability} 默认不允许访问本机或私有网络")
+    literal = _looks_like_ip(host)
+    addresses = [host] if literal else await resolver(host)
+    if not addresses:
+        raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, f"目标域名没有可用地址：{host}")
+
+    # Fake-IP is only a proxy placeholder; direct requests must use verified public addresses.
+    fallback = not literal and all(_is_fake_ip(address) for address in addresses)
+    if fallback:
+        addresses = await resolve_fake_ip(host)
+    if not addresses or any(_is_private_address(address) for address in addresses):
+        raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, f"{capability} 默认不允许访问本机或私有网络")
+    return addresses if fallback else None
+
+
 class PageHtmlClient:
     """受 SSRF 边界保护的公开页面抓取客户端。
 
@@ -176,8 +301,11 @@ class PageHtmlClient:
         for redirect_count in range(self.config.max_redirects + 1):
             # 安全边界：公开 URL 工具不能因为运行在用户机器/公司网络里，就获得访问
             # localhost、云 metadata 或企业内网的隐式能力；每一次重定向都重新校验。
-            await self._assert_public_target(current)
-            response = await self.transport.get(current, config=self.config)
+            pinned = await self._assert_public_target(current)
+            response = (
+                await self.transport.get(current, config=self.config, pinned_addresses=pinned)
+                if pinned is not None else await self.transport.get(current, config=self.config)
+            )
 
             location = response.headers.get("location")
             if response.status_code in HTTP_REDIRECT_STATUS_CODES and location:
@@ -223,19 +351,9 @@ class PageHtmlClient:
 
         raise SeoDataError(SeoDataErrorCode.INVALID_RESPONSE, "页面重定向处理失败")
 
-    async def _assert_public_target(self, url: str) -> None:
+    async def _assert_public_target(self, url: str) -> list[str] | None:
         """确认当前 URL 解析到的所有地址都属于可访问公网范围。"""
-
-        parsed = urlparse(url)
-        host = (parsed.hostname or "").lower()
-        if host == "localhost" or host.endswith(".localhost") or host.endswith(".local"):
-            raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, "PageInspection 默认不允许访问本机或私有网络")
-
-        addresses = [host] if _looks_like_ip(host) else await self.resolver(host)
-        if not addresses:
-            raise SeoDataError(SeoDataErrorCode.PROVIDER_UNAVAILABLE, f"目标域名没有可用地址：{host}")
-        if any(_is_private_address(address) for address in addresses):
-            raise SeoDataError(SeoDataErrorCode.ACCESS_FORBIDDEN, "PageInspection 默认不允许访问本机或私有网络")
+        return await validate_public_target(url, self.resolver, capability="PageInspection")
 
 
 def _normalize_url(value: str) -> str:
@@ -274,16 +392,14 @@ def _is_private_address(value: str) -> bool:
         address = ipaddress.ip_address(value)
     except ValueError:
         return True
-    return any(
-        (
-            address.is_private,
-            address.is_loopback,
-            address.is_link_local,
-            address.is_multicast,
-            address.is_reserved,
-            address.is_unspecified,
-        )
-    )
+    return not address.is_global or address.is_multicast
+
+
+def _is_fake_ip(value: str) -> bool:
+    try:
+        return ipaddress.ip_address(value) in ipaddress.ip_network("198.18.0.0/15")
+    except ValueError:
+        return False
 
 
 def _charset_from_content_type(content_type: str | None) -> str | None:
