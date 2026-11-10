@@ -1,0 +1,37 @@
+{
+  "name": "seo-audit-plugin",
+  "version": "0.2.2+codex.20260921060156",
+  "description": "Evidence-driven SEO audit and diagnosis workflows with structured handoff for Codex.",
+  "author": {
+    "name": "Chengpeng"
+  },
+  "keywords": [
+    "seo",
+    "technical-seo",
+    "search-console",
+    "ranking",
+    "diagnosis",
+    "diagnosis-handoff"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SEO Audit",
+    "shortDescription": "Turn Codex into an evidence-driven SEO engineer.",
+    "longDescription": "Adds evidence-driven SEO workflows for technical audits, ranking-drop diagnosis, keyword opportunity research, and first-party organic-traffic analysis. It can inspect public pages and crawl resources, measure page performance and real-user experience, analyze third-party organic-search visibility and current search results, research keyword/competitor markets, use Google Search Console for first-party search performance/index facts, and use GA4 for Organic Search landing-page, engagement, key-event, geography/device, and post-click behavior evidence. The plugin stops at diagnosis/recommendation handoff; Codex or another Host remains responsible for repository edits, tests, builds, commits, publishing, and explicit content creation.",
+    "developerName": "Chengpeng",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Audit this domain or URL for technical SEO problems and show evidence.",
+      "Diagnose why this domain, page, or query lost organic visibility.",
+      "Find realistic keyword opportunities for this site and separate high-value targets from easy-but-low-value keywords.",
+      "Analyze why Organic Search conversion changed and which landing pages or visitor segments matter most.",
+      "Audit this repository for technical SEO problems and prepare a Diagnosis Handoff."
+    ],
+    "screenshots": []
+  },
+  "mcpServers": "./.mcp.json"
+}

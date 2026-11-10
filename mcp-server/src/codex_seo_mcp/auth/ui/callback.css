@@ -1,0 +1,83 @@
+:root {
+  --oauth-bg: #f5f7fb;
+  --oauth-card-bg: #ffffff;
+  --oauth-text: #172033;
+  --oauth-muted: #667085;
+  --oauth-border: #e4e7ec;
+  --oauth-success: #067647;
+  --oauth-success-bg: #ecfdf3;
+  --oauth-danger: #b42318;
+  --oauth-danger-bg: #fef3f2;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #ffffff 0, var(--oauth-bg) 42rem);
+  color: var(--oauth-text);
+  font-family: var(--bs-font-sans-serif);
+}
+
+.oauth-card {
+  max-width: 34rem;
+  background: var(--oauth-card-bg);
+  border-radius: 1.25rem;
+}
+
+.oauth-brand {
+  letter-spacing: -0.01em;
+}
+
+.oauth-status-icon {
+  display: inline-flex;
+  width: 3.5rem;
+  height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.oauth-status-icon.is-success {
+  color: var(--oauth-success);
+  background: var(--oauth-success-bg);
+}
+
+.oauth-status-icon.is-danger {
+  color: var(--oauth-danger);
+  background: var(--oauth-danger-bg);
+}
+
+.oauth-account {
+  border-color: var(--oauth-border) !important;
+  background: color-mix(in srgb, var(--oauth-card-bg) 92%, var(--oauth-bg));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bs-body-color: #f2f4f7;
+    --bs-body-color-rgb: 242, 244, 247;
+    --bs-secondary-color: #98a2b3;
+    --bs-secondary-color-rgb: 152, 162, 179;
+    --bs-light-bg-subtle: #1d2939;
+    --bs-border-color: #344054;
+    --oauth-bg: #0c111d;
+    --oauth-card-bg: #101828;
+    --oauth-text: #f2f4f7;
+    --oauth-muted: #98a2b3;
+    --oauth-border: #344054;
+    --oauth-success: #75e0a7;
+    --oauth-success-bg: #053321;
+    --oauth-danger: #fda29b;
+    --oauth-danger-bg: #55160c;
+  }
+
+  body {
+    background: radial-gradient(circle at top, #1d2939 0, var(--oauth-bg) 42rem);
+  }
+
+  .text-bg-light {
+    color: #eaecf0 !important;
+    background-color: #1d2939 !important;
+  }
+}

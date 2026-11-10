@@ -1,0 +1,452 @@
+[
+  {
+    "id": "ranking-multiple-pages-target-mismatch",
+    "kind": "ranking-comparison",
+    "query": "seo tools",
+    "target_page": "https://example.com/target",
+    "prior": {
+      "start_date": "2026-07-01",
+      "end_date": "2026-07-31",
+      "rows": [
+        {"query": "seo tools", "page": "https://example.com/target", "clicks": 40, "impressions": 400, "ctr": 0.1, "position": 4},
+        {"query": "seo tools", "page": "https://example.com/blog", "clicks": 10, "impressions": 100, "ctr": 0.1, "position": 9}
+      ]
+    },
+    "current": {
+      "start_date": "2026-08-01",
+      "end_date": "2026-08-31",
+      "rows": [
+        {"query": "seo tools", "page": "https://example.com/blog", "clicks": 20, "impressions": 300, "ctr": 0.0666667, "position": 6},
+        {"query": "seo tools", "page": "https://example.com/other", "clicks": 5, "impressions": 80, "ctr": 0.0625, "position": 12}
+      ]
+    },
+    "expected": {
+      "prior_page_count": 2,
+      "current_page_count": 2,
+      "target_prior_state": "observed",
+      "target_current_state": "not-observed",
+      "change_page_count": 3,
+      "warning_contains": "多个 Ranking Page"
+    }
+  },
+  {
+    "id": "ranking-no-data-is-not-zero",
+    "kind": "ranking-comparison",
+    "query": "seo tools",
+    "prior": {
+      "start_date": "2026-07-01",
+      "end_date": "2026-07-31",
+      "rows": []
+    },
+    "current": {
+      "start_date": "2026-08-01",
+      "end_date": "2026-08-31",
+      "rows": [
+        {"query": "seo tools", "page": "https://example.com/page", "clicks": 2, "impressions": 20, "ctr": 0.1, "position": 8}
+      ]
+    },
+    "expected": {
+      "prior_is_none": true,
+      "current_is_present": true,
+      "warning_contains": "不能解释为此前未排名"
+    }
+  },
+  {
+    "id": "diagnosis-enum-contract",
+    "kind": "enum-contract",
+    "expected": {
+      "finding_status": ["confirmed", "plausible", "already-safe", "unproven"],
+      "hypothesis_status": ["supported", "partially-supported", "excluded", "insufficient-data"],
+      "premise_status": ["decline-confirmed", "mixed-change", "decline-not-confirmed", "insufficient-data"],
+      "action_category": ["technical", "page-structure", "indexing", "content", "keyword-strategy", "observation", "insufficient-evidence"]
+    }
+  },
+  {
+    "id": "skill-contract-guardrails",
+    "kind": "skill-guardrails",
+    "expected": {
+      "technical_statuses": ["confirmed", "plausible", "already-safe", "unproven"],
+      "ranking_hypotheses": ["supported", "partially-supported", "excluded", "insufficient-data"],
+      "ranking_premises": ["decline-confirmed", "mixed-change", "decline-not-confirmed", "insufficient-data"],
+      "required_ranking_capabilities": ["OrganicVisibility", "SearchPerformance", "SerpResearch", "PageInspection", "IndexInspection", "ResourceInspection", "PageQuality", "KeywordResearch", "CompetitorResearch"],
+      "technical_guardrails": ["capability gap / missing evidence", "does not execute JavaScript", "not a target-site Finding", "Host shell/curl as a parallel data source", "SEO one-click recheck", "do not extrapolate them from one page"],
+      "visibility_guardrails": ["estimated_traffic", "same Provider", "Sandbox", "DataForSEO Labs scope is not the DataForSEO platform", "GSC is optional corroboration for page ownership", "For an owned domain, use `SearchPerformance` as the primary ranking-trend evidence when accessible"],
+      "snapshot_guardrails": ["locally accumulated weekly observations", "Do not fill missing weeks", "non-consecutive previous observation"],
+      "execution_guardrails": ["do not inspect this plugin's own", "do not run shell commands"],
+      "page_quality_guardrails": ["do not open `pagespeed.web.dev`", "both `mobile` and `desktop`", "tracking-only url uses the canonical url for pagequality by default"],
+      "presentation_guardrails": ["Do not dump the full `DiagnosisResult` or 8-block `DiagnosisHandoff` JSON", "scoped engineering Handoff", "Provider provenance is user-relevant; implementation topology is not", "页面性能与体验", "Google 自然搜索表现", "主要内容加载速度（LCP）", "交互响应速度（INP）", "页面视觉稳定性（CLS）", "首次内容出现速度（FCP）", "服务器首字节响应（TTFB）"],
+      "keyword_opportunity_guardrails": ["Do not invent a site-level opportunity rating", "KD only affects Feasibility", "do not apply one global Volume cutoff", "Do not automatically generate article JSON", "default keyword-list size is 20", "Provider Intent and contextual SERP/page fit must be separate columns", "Unknown is not medium", "do not silently combine Google keyword metrics with Baidu SERP evidence", "owned site with accessible GSC", "required input is missing"],
+      "web_analytics_guardrails": ["Organic Search", "Keep GA4 separate from GSC", "paid advertising spend", "Web Data Stream", "ranking and conversion", "all visitors"],
+      "required_keyword_capabilities": ["KeywordResearch", "CompetitorResearch", "OrganicVisibility", "SerpResearch", "PageInspection", "SearchPerformance"],
+      "technical_scenario_references": ["international-seo-semantics.md", "url-lifecycle-seo-semantics.md", "rendering-seo-semantics.md", "site-architecture-seo-semantics.md", "structured-data-seo-semantics.md", "search-appearance-seo-semantics.md", "media-seo-semantics.md", "template-regression-semantics.md"],
+      "ranking_scenario_references": ["ranking-page-ownership-semantics.md", "content-lifecycle-semantics.md", "search-appearance-seo-semantics.md"],
+      "scenario_routing_guardrails": ["Do not preload every technical SEO reference", "Default: one primary reference", "Add at most two supporting references"],
+      "decision_interaction_guardrails": ["Do not turn ambiguity into an implicit default", "auto-continue", "input-required", "fallback-continue", "Model-visible Tool arguments never carry human approval or resolved GSC/GA4 Property identity"],
+      "shared_references": ["capability-boundaries.md", "content-lifecycle-semantics.md", "diagnosis-output.md", "evidence-semantics.md", "international-seo-semantics.md", "keyword-opportunity-semantics.md", "media-seo-semantics.md", "organic-visibility-semantics.md", "page-quality-semantics.md", "ranking-page-ownership-semantics.md", "rendering-seo-semantics.md", "search-appearance-seo-semantics.md", "search-performance-semantics.md", "site-architecture-seo-semantics.md", "structured-data-seo-semantics.md", "technical-seo-checks.md", "technical-seo-scenario-router.md", "template-regression-semantics.md", "url-lifecycle-seo-semantics.md", "web-analytics-semantics.md"],
+      "min_direct_references": 4,
+      "max_skill_lines": 80
+    }
+  },
+  {
+    "id": "keyword-opportunity-scenario-decisions",
+    "kind": "keyword-opportunity",
+    "cases": [
+      {
+        "scenario": "opportunity_discovery",
+        "keyword": "unrelated easy keyword",
+        "market": "US",
+        "target_domain": "example.com",
+        "signals": {"search_volume": 10, "keyword_difficulty": 9, "intents": ["INFORMATIONAL"], "business_fit": "weak", "demand_level": "low", "intent_fit": "weak", "existing_signal": "none", "serp_fit": "medium"},
+        "expected": {"status": "assessed", "value_level": "low", "feasibility_level": "high", "opportunity_level": "low", "recommended_timing": "ignore", "recommended_action": "ignore"}
+      },
+      {
+        "scenario": "site_research",
+        "keyword": "enterprise seo audit platform",
+        "market": "US",
+        "target_domain": "example.com",
+        "signals": {"search_volume": 40, "keyword_difficulty": 12, "intents": ["COMMERCIAL"], "business_fit": "strong", "demand_level": "low", "intent_fit": "strong", "existing_signal": "none", "serp_fit": "strong"},
+        "expected": {"status": "assessed", "value_level": "high", "feasibility_level": "high", "opportunity_level": "high", "recommended_timing": "now", "recommended_action": "create_new_landing_page"}
+      },
+      {
+        "scenario": "site_research",
+        "keyword": "enterprise seo platform",
+        "market": "US",
+        "target_domain": "example.com",
+        "signals": {"search_volume": 3000, "keyword_difficulty": 78, "intents": ["COMMERCIAL"], "business_fit": "strong", "demand_level": "high", "intent_fit": "strong", "existing_signal": "none", "serp_fit": "strong"},
+        "expected": {"status": "assessed", "value_level": "high", "feasibility_level": "low", "opportunity_level": "medium", "recommended_timing": "later", "recommended_action": "later"}
+      },
+      {
+        "scenario": "page_research",
+        "keyword": "seo audit software",
+        "market": "US",
+        "target_domain": "example.com",
+        "target_page": "https://example.com/blog/how-seo-works",
+        "signals": {"search_volume": 1600, "keyword_difficulty": 18, "intents": ["COMMERCIAL"], "business_fit": "strong", "demand_level": "high", "intent_fit": "strong", "page_fit": "weak", "existing_signal": "none", "serp_fit": "strong"},
+        "expected": {"status": "assessed", "value_level": "high", "feasibility_level": "high", "opportunity_level": "high", "recommended_timing": "now", "recommended_action": "create_new_landing_page"}
+      },
+      {
+        "scenario": "site_research",
+        "keyword": "企业网站建设多少钱",
+        "market": "CN",
+        "target_domain": "example.cn",
+        "signals": {"search_volume": null, "keyword_difficulty": null, "intents": [], "business_fit": "strong", "demand_level": "unknown", "intent_fit": "strong", "existing_signal": "none", "serp_fit": "strong"},
+        "expected": {"status": "insufficient_evidence", "value_level": null, "feasibility_level": null, "opportunity_level": null, "recommended_timing": null, "recommended_action": null, "unknown_contains": "demand_level"}
+      }
+    ]
+  },
+  {
+    "id": "ranking-page-ownership-scenario-decisions",
+    "kind": "page-ownership",
+    "cases": [
+      {
+        "query": "seo audit",
+        "market": "US",
+        "target_page": "https://example.com/a",
+        "observations": [
+          {"url": "https://example.com/a", "current_position": 4, "previous_position": 5}
+        ],
+        "visibility_impact": "neutral",
+        "expected": {"ownership_state": "stable_owner", "target_page_state": "matched", "recommended_action": "keep_or_strengthen_owner"}
+      },
+      {
+        "query": "seo audit",
+        "market": "US",
+        "observations": [
+          {"url": "https://example.com/guide", "current_position": 2},
+          {"url": "https://example.com/product", "current_position": 5}
+        ],
+        "pair_evidence": [
+          {"page_a": "https://example.com/guide", "page_b": "https://example.com/product", "role_relation": "distinct", "content_overlap": "low"}
+        ],
+        "visibility_impact": "positive",
+        "expected": {"ownership_state": "intent_split", "recommended_action": "keep_roles_distinct"}
+      },
+      {
+        "query": "seo audit",
+        "market": "US",
+        "observations": [
+          {"url": "https://example.com/a", "current_position": 12, "previous_position": 4},
+          {"url": "https://example.com/b", "current_position": 5, "previous_position": 15}
+        ],
+        "expected": {"ownership_state": "page_switching", "switching_observed": true, "recommended_action": "clarify_page_roles", "unknown_contains": "page_role_relationship"}
+      },
+      {
+        "query": "seo audit",
+        "market": "US",
+        "observations": [
+          {"url": "https://example.com/a", "current_position": 14, "previous_position": 5},
+          {"url": "https://example.com/b", "current_position": 6, "previous_position": 16}
+        ],
+        "pair_evidence": [
+          {"page_a": "https://example.com/a", "page_b": "https://example.com/b", "role_relation": "same", "content_overlap": "high"}
+        ],
+        "visibility_impact": "negative",
+        "expected": {"ownership_state": "probable_cannibalization", "switching_observed": true, "recommended_action": "consolidate_or_differentiate"}
+      },
+      {
+        "query": "seo audit",
+        "market": "US",
+        "observations": [
+          {"url": "https://example.com/a", "current_position": 1, "previous_position": 1},
+          {"url": "https://example.com/b", "current_position": 2, "previous_position": 2}
+        ],
+        "pair_evidence": [
+          {"page_a": "https://example.com/a", "page_b": "https://example.com/b", "role_relation": "same", "content_overlap": "high"}
+        ],
+        "visibility_impact": "positive",
+        "expected": {"ownership_state": "insufficient_evidence", "recommended_action": "monitor"}
+      }
+    ]
+  },
+  {
+    "id": "url-lifecycle-scenario-decisions",
+    "kind": "url-lifecycle",
+    "cases": [
+      {
+        "requested_url": "https://example.com/old",
+        "final_url": "https://example.com/new",
+        "status_code": 200,
+        "canonical": "https://example.com/new",
+        "intent": "permanent_move",
+        "expected_target": "https://example.com/new",
+        "redirects": [
+          {"from_url": "https://example.com/old", "status_code": 301, "location": "/new", "to_url": "https://example.com/new"}
+        ],
+        "expected": {"state": "healthy", "redirect_state": "direct_permanent", "target_state": "matched"}
+      },
+      {
+        "requested_url": "https://example.com/old",
+        "final_url": "https://example.com/new",
+        "status_code": 200,
+        "canonical": "https://example.com/new",
+        "intent": "permanent_move",
+        "expected_target": "https://example.com/new",
+        "redirects": [
+          {"from_url": "https://example.com/old", "status_code": 302, "location": "/new", "to_url": "https://example.com/new"}
+        ],
+        "expected": {"state": "needs_attention", "redirect_state": "direct_temporary", "target_state": "matched", "issue_contains": "non_permanent_redirect_in_permanent_move"}
+      },
+      {
+        "requested_url": "https://example.com/old",
+        "final_url": "https://example.com/wrong",
+        "status_code": 200,
+        "canonical": "https://example.com/wrong",
+        "intent": "permanent_move",
+        "expected_target": "https://example.com/new",
+        "redirects": [
+          {"from_url": "https://example.com/old", "status_code": 301, "location": "/wrong", "to_url": "https://example.com/wrong"}
+        ],
+        "expected": {"state": "misconfigured", "redirect_state": "direct_permanent", "target_state": "mismatched", "issue_contains": "redirect_target_mismatch"}
+      },
+      {
+        "requested_url": "https://example.com/deleted",
+        "final_url": "https://example.com/deleted",
+        "status_code": 404,
+        "intent": "remove",
+        "expected": {"state": "removed", "redirect_state": "none"}
+      },
+      {
+        "requested_url": "https://example.com/missing",
+        "final_url": "https://example.com/missing",
+        "status_code": 200,
+        "intent": "observe",
+        "check_soft404": true,
+        "expected": {"state": "insufficient_evidence", "redirect_state": "none", "unknown_contains": "error_page_signal"}
+      }
+    ]
+  },
+  {
+    "id": "content-lifecycle-scenario-decisions",
+    "kind": "content-lifecycle",
+    "cases": [
+      {
+        "page_url": "https://example.com/guide",
+        "market": "US",
+        "signals": {"visibility_trend": "declining", "demand_trend": "stable", "intent_fit": "strong", "freshness": "outdated", "coverage_gap": "medium", "content_value": "high", "distinct_purpose": "distinct"},
+        "expected": {"action": "refresh", "state": "actionable"}
+      },
+      {
+        "page_url": "https://example.com/guide",
+        "market": "US",
+        "signals": {"visibility_trend": "declining", "demand_trend": "stable", "intent_fit": "strong", "freshness": "current", "coverage_gap": "high", "content_value": "high", "distinct_purpose": "distinct"},
+        "expected": {"action": "expand", "state": "actionable"}
+      },
+      {
+        "page_url": "https://example.com/old",
+        "market": "US",
+        "signals": {"visibility_trend": "declining", "demand_trend": "stable", "intent_fit": "strong", "freshness": "current", "coverage_gap": "low", "content_value": "medium", "distinct_purpose": "not_distinct", "page_ownership_state": "probable_cannibalization", "replacement_url": "https://example.com/main"},
+        "expected": {"action": "merge", "state": "actionable", "merge_target": "https://example.com/main"}
+      },
+      {
+        "page_url": "https://example.com/healthy",
+        "market": "US",
+        "signals": {"visibility_trend": "growing", "demand_trend": "stable", "intent_fit": "strong", "freshness": "current", "coverage_gap": "low", "content_value": "high", "distinct_purpose": "distinct"},
+        "expected": {"action": "keep", "state": "healthy"}
+      }
+    ]
+  },
+  {
+    "id": "search-appearance-scenario-decisions",
+    "kind": "search-appearance",
+    "cases": [
+      {
+        "query": "seo audit",
+        "market": "US",
+        "signals": {"source_title": "SEO Audit", "source_title_count": 1, "source_description": "Audit your site", "source_description_count": 1, "serp_title": "Free SEO Audit Tool", "serp_snippet": "Check your website SEO", "previous_position": 4, "current_position": 4.1, "previous_ctr": 0.12, "current_ctr": 0.08},
+        "expected": {"state": "presentation_change_candidate", "recommended_action": "compare_serp_copy_and_query_intent", "ctr_trend": "declining", "position_trend": "stable"}
+      },
+      {
+        "query": "seo audit",
+        "market": "US",
+        "signals": {"source_title": "SEO Audit", "source_title_count": 1, "source_description": "Audit your site", "source_description_count": 1, "serp_title": "SEO Audit Tool", "serp_snippet": "Audit your website", "previous_position": 3, "current_position": 7, "previous_ctr": 0.12, "current_ctr": 0.06},
+        "expected": {"state": "ranking_change_present", "recommended_action": "diagnose_ranking_decline", "ctr_trend": "declining", "position_trend": "declining"}
+      },
+      {
+        "query": "seo audit",
+        "market": "US",
+        "signals": {"source_title": "SEO Audit", "source_title_count": 1, "source_description": "Audit your site", "source_description_count": 1, "serp_title": "SEO Audit", "serp_snippet": "Audit your site", "serp_url": "https://example.com/blog", "target_page": "https://example.com/product", "previous_position": 4, "current_position": 4, "previous_ctr": 0.1, "current_ctr": 0.1},
+        "expected": {"state": "target_page_mismatch", "recommended_action": "investigate_page_ownership"}
+      }
+    ]
+  },
+  {
+    "id": "hreflang-scenario-decisions",
+    "kind": "hreflang",
+    "cases": [
+      {
+        "pages": [
+          {"url": "https://example.com/en/page", "hreflang_alternates": [{"hreflang": "en", "url": "https://example.com/en/page"}, {"hreflang": "de", "url": "https://example.com/de/page"}]},
+          {"url": "https://example.com/de/page", "hreflang_alternates": [{"hreflang": "en", "url": "https://example.com/en/page"}, {"hreflang": "de", "url": "https://example.com/de/page"}]}
+        ],
+        "expected": {"state": "healthy"}
+      },
+      {
+        "pages": [
+          {"url": "https://example.com/en/page", "hreflang_alternates": [{"hreflang": "en", "url": "https://example.com/en/page"}, {"hreflang": "de", "url": "https://example.com/de/page"}]},
+          {"url": "https://example.com/de/page", "hreflang_alternates": [{"hreflang": "de", "url": "https://example.com/de/page"}]}
+        ],
+        "expected": {"state": "issues_found", "issue_contains": "return_link_missing"}
+      },
+      {
+        "pages": [
+          {"url": "https://example.com/en/page", "hreflang_alternates": [{"hreflang": "en", "url": "https://example.com/en/page"}, {"hreflang": "de", "url": "https://example.com/de/page"}]}
+        ],
+        "expected": {"state": "insufficient_evidence", "unknown_target": "https://example.com/de/page"}
+      }
+    ]
+  },
+  {
+    "id": "structured-data-scenario-decisions",
+    "kind": "structured-data",
+    "cases": [
+      {
+        "url": "https://example.com/product",
+        "blocks": [{"valid": true, "types": ["Product"], "data": {"@type": "Product"}}],
+        "expected_types": ["Product"],
+        "expected": {"state": "markup_present"}
+      },
+      {
+        "url": "https://example.com/bad",
+        "blocks": [{"valid": false, "types": [], "parse_error": "bad json"}],
+        "expected": {"state": "issues_found", "issue_contains": "invalid_json_ld"}
+      },
+      {
+        "url": "https://example.com/product",
+        "blocks": [{"valid": true, "types": ["Product"], "data": {"@type": "Product"}}],
+        "expected_types": ["Product"],
+        "check_rich_result_eligibility": true,
+        "expected": {"state": "insufficient_evidence", "unknown_contains": "type_specific_google_requirements"}
+      },
+      {
+        "url": "https://example.com/plain",
+        "expected": {"state": "no_markup"}
+      }
+    ]
+  },
+  {
+    "id": "site-migration-scenario-decisions",
+    "kind": "site-migration",
+    "mappings": [
+      {"old_url": "https://old.com/a", "new_url": "https://new.com/a"},
+      {"old_url": "https://old.com/b", "new_url": "https://new.com/b"}
+    ],
+    "expected_mapping_count": 2,
+    "new_sitemap_urls": ["https://new.com/a", "https://new.com/b"],
+    "internal_links_state": "updated",
+    "multilingual": true,
+    "hreflang_state": "healthy",
+    "expected": {"state": "passed", "coverage": "complete"}
+  },
+  {
+    "id": "site-migration-sample-never-full-pass",
+    "kind": "site-migration",
+    "mappings": [{"old_url": "https://old.com/a", "new_url": "https://new.com/a"}],
+    "new_sitemap_urls": ["https://new.com/a"],
+    "internal_links_state": "updated",
+    "hreflang_state": "healthy",
+    "expected": {"state": "sample_passed", "coverage": "sample", "unknown_contains": "full_mapping_count"}
+  },
+  {
+    "id": "site-migration-wrong-target-fails",
+    "kind": "site-migration",
+    "mappings": [{"old_url": "https://old.com/a", "new_url": "https://new.com/a", "final_url": "https://new.com/wrong"}],
+    "expected_mapping_count": 1,
+    "new_sitemap_urls": ["https://new.com/a"],
+    "internal_links_state": "updated",
+    "hreflang_state": "healthy",
+    "expected": {"state": "failed"}
+  },
+  {
+    "id": "template-regression-scenario-decisions",
+    "kind": "template-regression",
+    "pairs": [
+      {
+        "before": {"url": "https://example.com/p", "status_code": 200, "final_url": "https://example.com/p", "canonical": "https://example.com/p", "declared_noindex": false, "title": "Title", "title_count": 1, "meta_description": "Description", "h1_count": 1, "lang": "en", "hreflang_pairs": [["en", "https://example.com/p"]], "structured_data_types": ["Article"]},
+        "after": {"url": "https://example.com/p", "status_code": 200, "final_url": "https://example.com/p", "canonical": "https://example.com/p", "declared_noindex": true, "title": "Title", "title_count": 1, "meta_description": "Description", "h1_count": 1, "lang": "en", "hreflang_pairs": [["en", "https://example.com/p"]], "structured_data_types": ["Article"]}
+      }
+    ],
+    "expected": {"state": "regression_detected", "issue_contains": "noindex_introduced"}
+  },
+  {
+    "id": "template-regression-copy-change-not-auto-regression",
+    "kind": "template-regression",
+    "pairs": [
+      {
+        "before": {"url": "https://example.com/p", "status_code": 200, "final_url": "https://example.com/p", "canonical": "https://example.com/p", "declared_noindex": false, "title": "Old title", "title_count": 1, "meta_description": "Description", "h1_count": 1, "lang": "en"},
+        "after": {"url": "https://example.com/p", "status_code": 200, "final_url": "https://example.com/p", "canonical": "https://example.com/p", "declared_noindex": false, "title": "New title", "title_count": 1, "meta_description": "Description", "h1_count": 1, "lang": "en"}
+      }
+    ],
+    "expected": {"state": "changed"}
+  },
+  {
+    "id": "template-regression-stable-sample",
+    "kind": "template-regression",
+    "pairs": [
+      {
+        "before": {"url": "https://example.com/p", "status_code": 200, "final_url": "https://example.com/p", "canonical": "https://example.com/p", "declared_noindex": false, "title": "Title", "title_count": 1, "meta_description": "Description", "h1_count": 1, "lang": "en"},
+        "after": {"url": "https://example.com/p", "status_code": 200, "final_url": "https://example.com/p", "canonical": "https://example.com/p", "declared_noindex": false, "title": "Title", "title_count": 1, "meta_description": "Description", "h1_count": 1, "lang": "en"}
+      }
+    ],
+    "expected": {"state": "stable"}
+  },
+  {
+    "id": "plugin-stops-at-diagnosis-handoff",
+    "kind": "plugin-boundary",
+    "expected": {
+      "skills": ["keyword-opportunity-research", "organic-traffic-analysis", "ranking-drop-diagnosis", "technical-seo-audit"],
+      "codex_capabilities": ["Interactive", "Read"],
+      "forbidden_skill": "seo-code-fix",
+      "required_handoff_phrase": "Diagnosis Handoff"
+    }
+  },
+  {
+    "id": "handoff-is-eight-block-resumable-schema",
+    "kind": "handoff-contract",
+    "expected": {
+      "blocks": ["task", "target", "diagnosis", "evidence", "desiredState", "constraints", "progress", "continuation"],
+      "forbidden_top_level": ["prompt", "conversationHistory", "assignee", "workflow", "patch"],
+      "progress_required": true,
+      "continuation_required": true
+    }
+  }
+]

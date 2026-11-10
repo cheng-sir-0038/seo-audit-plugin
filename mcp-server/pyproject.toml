@@ -1,0 +1,41 @@
+[project]
+name = "codex-seo-mcp"
+version = "0.2.2"
+description = "Portable SEO data capabilities for SEO Audit Plugin."
+requires-python = ">=3.11.16,<3.12"
+dependencies = [
+  "mcp[cli]>=2.1,<3",
+  "google-api-python-client>=2,<3",
+  "google-auth-oauthlib>=1,<2",
+]
+
+[dependency-groups]
+dev = [
+  "jsonschema>=4,<5",
+  "pytest>=9,<10",
+]
+
+[project.scripts]
+codex-seo-mcp = "codex_seo_mcp.server:main"
+codex-seo-gsc-authorize = "codex_seo_mcp.auth_cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/codex_seo_mcp"]
+
+[tool.uv]
+# macOS 和 Linux 使用同一锁文件，由 uv 选择各平台兼容的 wheel。
+required-version = "==0.12.9"
+environments = [
+  "sys_platform == 'darwin'",
+  "sys_platform == 'linux'",
+]
+
+[[tool.uv.index]]
+# 锁文件使用 USTC PyPI 镜像。
+name = "ustc"
+url = "https://mirrors.ustc.edu.cn/pypi/simple"
+default = true

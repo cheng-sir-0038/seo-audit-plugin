@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:diagnosis-handoff:v1",
+  "title": "Codex SEO Diagnosis Handoff v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task",
+    "target",
+    "diagnosis",
+    "evidence",
+    "desiredState",
+    "constraints",
+    "progress",
+    "continuation"
+  ],
+  "properties": {
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["goal", "handoffReason"],
+      "properties": {
+        "goal": {"type": "string", "minLength": 1},
+        "handoffReason": {"type": "string", "minLength": 1}
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "locator"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "locator": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "diagnosis": {"$ref": "#/$defs/diagnosis"},
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "summary"],
+        "properties": {
+          "ref": {"type": "string", "minLength": 1},
+          "summary": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "desiredState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "outcomes", "acceptanceCriteria"],
+      "properties": {
+        "summary": {"type": "string", "minLength": 1},
+        "outcomes": {"type": "object"},
+        "acceptanceCriteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "must", "mustNot"],
+      "properties": {
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "must": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "mustNot": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["completed", "attempted", "decisions", "blocked"],
+      "properties": {
+        "completed": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "attempted": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "decisions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "blocked": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "continuation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nextAction", "verification"],
+      "properties": {
+        "nextAction": {"type": "string", "minLength": 1},
+        "verification": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [
+        {"properties": {"findings": {"minItems": 1}}},
+        {"properties": {"hypotheses": {"minItems": 1}}},
+        {"properties": {"unknowns": {"minItems": 1}}}
+      ],
+      "required": [
+        "diagnosisType",
+        "summary",
+        "findings",
+        "hypotheses",
+        "unknowns",
+        "sourceRefs",
+        "premiseStatus"
+      ],
+      "properties": {
+        "diagnosisType": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "hypotheses": {"type": "array", "items": {"$ref": "#/$defs/hypothesis"}},
+        "unknowns": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "sourceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "premiseStatus": {
+          "type": ["string", "null"],
+          "enum": ["decline-confirmed", "mixed-change", "decline-not-confirmed", "insufficient-data", null]
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "subject", "status", "confidence", "summary", "rationale", "actionCategory", "sourceRefs"],
+      "properties": {
+        "type": {"type": "string", "minLength": 1},
+        "subject": {"type": "string", "minLength": 1},
+        "status": {"enum": ["confirmed", "plausible", "already-safe", "unproven"]},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "summary": {"type": "string", "minLength": 1},
+        "rationale": {"type": "string", "minLength": 1},
+        "actionCategory": {"enum": ["technical", "page-structure", "indexing", "content", "keyword-strategy", "observation", "insufficient-evidence"]},
+        "sourceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "status", "rationale", "sourceRefs", "unknowns"],
+      "properties": {
+        "type": {"type": "string", "minLength": 1},
+        "status": {"enum": ["supported", "partially-supported", "excluded", "insufficient-data"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "sourceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "unknowns": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:url-lifecycle-assessment:v1",
+  "title": "Codex SEO URL Lifecycle Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestedUrl",
+    "finalUrl",
+    "finalStatusCode",
+    "intent",
+    "expectedTarget",
+    "state",
+    "redirectState",
+    "targetState",
+    "canonical",
+    "canonicalState",
+    "soft404State",
+    "redirects",
+    "issueCodes",
+    "reasons",
+    "recommendedActions",
+    "unknowns",
+    "confidence"
+  ],
+  "properties": {
+    "requestedUrl": {"type": "string", "minLength": 1},
+    "finalUrl": {"type": "string", "minLength": 1},
+    "finalStatusCode": {"type": "integer", "minimum": 100, "maximum": 599},
+    "intent": {"enum": ["observe", "keep", "permanent_move", "temporary_move", "remove"]},
+    "expectedTarget": {"type": ["string", "null"], "minLength": 1},
+    "state": {"enum": ["healthy", "removed", "needs_attention", "misconfigured", "insufficient_evidence"]},
+    "redirectState": {"enum": ["none", "direct_permanent", "direct_temporary", "chain", "mixed_chain"]},
+    "targetState": {"enum": ["matched", "mismatched", "unknown"]},
+    "canonical": {"type": ["string", "null"], "minLength": 1},
+    "canonicalState": {"enum": ["final_url", "expected_target", "other", "missing"]},
+    "soft404State": {"enum": ["not_applicable", "suspected", "not_observed", "unknown"]},
+    "redirects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fromUrl", "statusCode", "location", "toUrl"],
+        "properties": {
+          "fromUrl": {"type": "string", "minLength": 1},
+          "statusCode": {"type": "integer", "enum": [301, 302, 303, 307, 308]},
+          "location": {"type": "string", "minLength": 1},
+          "toUrl": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "issueCodes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "recommendedActions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "unknowns": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "confidence": {"enum": ["high", "medium", "low"]}
+  }
+}

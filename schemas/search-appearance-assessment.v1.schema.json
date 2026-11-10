@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:search-appearance-assessment:v1",
+  "title": "Codex SEO Search Appearance Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query", "market", "state", "titleState", "snippetState", "positionTrend", "ctrTrend", "rankingPageState", "reasons", "recommendedAction", "unknowns", "confidence"],
+  "properties": {
+    "query": {"type": "string", "minLength": 1},
+    "market": {"type": "string", "minLength": 1},
+    "state": {"enum": ["source_metadata_issue", "target_page_mismatch", "ranking_change_present", "presentation_change_candidate", "rewrite_observed", "no_material_issue", "insufficient_evidence"]},
+    "titleState": {"enum": ["matches_source", "different", "source_missing", "unknown"]},
+    "snippetState": {"enum": ["matches_source", "different", "source_missing", "unknown"]},
+    "positionTrend": {"enum": ["declining", "stable", "improving", "unknown"]},
+    "ctrTrend": {"enum": ["declining", "stable", "improving", "unknown"]},
+    "rankingPageState": {"enum": ["matched", "mismatched", "unknown"]},
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "recommendedAction": {"enum": ["fix_source_metadata", "investigate_page_ownership", "diagnose_ranking_decline", "compare_serp_copy_and_query_intent", "monitor_serp_presentation", "keep_current_presentation", "collect_serp_query_evidence"]},
+    "unknowns": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "confidence": {"enum": ["high", "medium", "low"]}
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:content-lifecycle-assessment:v1",
+  "title": "Codex SEO Content Lifecycle Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pageUrl", "market", "action", "mergeTarget", "state", "signals", "reasons", "unknowns", "confidence"],
+  "properties": {
+    "pageUrl": {"type": "string", "minLength": 1},
+    "market": {"type": "string", "minLength": 1},
+    "action": {"enum": ["refresh", "expand", "merge", "keep", "remove", "redirect", "monitor"]},
+    "mergeTarget": {"type": ["string", "null"], "minLength": 1},
+    "state": {"enum": ["actionable", "healthy", "demand_decline", "intent_mismatch", "needs_target", "insufficient_evidence"]},
+    "signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["visibilityTrend", "demandTrend", "intentFit", "freshness", "coverageGap", "contentValue", "distinctPurpose", "pageOwnershipState", "replacementUrl"],
+      "properties": {
+        "visibilityTrend": {"enum": ["declining", "stable", "growing", "unknown"]},
+        "demandTrend": {"enum": ["declining", "stable", "growing", "unknown"]},
+        "intentFit": {"enum": ["strong", "medium", "weak", "unknown"]},
+        "freshness": {"enum": ["current", "outdated", "unknown"]},
+        "coverageGap": {"enum": ["high", "medium", "low", "unknown"]},
+        "contentValue": {"enum": ["high", "medium", "low", "unknown"]},
+        "distinctPurpose": {"enum": ["distinct", "not_distinct", "unknown"]},
+        "pageOwnershipState": {"type": "string", "minLength": 1},
+        "replacementUrl": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "unknowns": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "confidence": {"enum": ["high", "medium", "low"]}
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:template-regression-assessment:v1",
+  "title": "Codex SEO Template Regression Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "pagesCompared", "changedPages", "regressionPages", "issues", "unknowns", "reasons", "confidence"],
+  "properties": {
+    "state": {"enum": ["stable", "changed", "regression_detected", "insufficient_evidence"]},
+    "pagesCompared": {"type": "integer", "minimum": 0},
+    "changedPages": {"type": "integer", "minimum": 0},
+    "regressionPages": {"type": "integer", "minimum": 0},
+    "issues": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["code", "url", "summary", "severity"], "properties": {"code": {"type": "string"}, "url": {"type": "string"}, "summary": {"type": "string"}, "severity": {"enum": ["high", "medium", "low"]}}}},
+    "unknowns": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"enum": ["high", "medium", "low"]}
+  }
+}

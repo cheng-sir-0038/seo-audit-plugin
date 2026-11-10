@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:site-migration-assessment:v1",
+  "title": "Codex SEO Site Migration Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "checkedMappings", "expectedMappings", "coverage", "passedMappings", "attentionMappings", "failedMappings", "mappings", "issueCodes", "unknowns", "reasons", "confidence"],
+  "properties": {
+    "state": {"enum": ["passed", "sample_passed", "needs_attention", "failed", "insufficient_evidence"]},
+    "checkedMappings": {"type": "integer", "minimum": 0},
+    "expectedMappings": {"type": ["integer", "null"], "minimum": 0},
+    "coverage": {"enum": ["sample", "complete"]},
+    "passedMappings": {"type": "integer", "minimum": 0},
+    "attentionMappings": {"type": "integer", "minimum": 0},
+    "failedMappings": {"type": "integer", "minimum": 0},
+    "mappings": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["oldUrl", "newUrl", "lifecycleState", "targetState", "redirectState", "canonicalState", "issueCodes"], "properties": {"oldUrl": {"type": "string"}, "newUrl": {"type": "string"}, "lifecycleState": {"type": "string"}, "targetState": {"type": "string"}, "redirectState": {"type": "string"}, "canonicalState": {"type": "string"}, "issueCodes": {"type": "array", "items": {"type": "string"}}}}},
+    "issueCodes": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "unknowns": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"enum": ["high", "medium", "low"]}
+  }
+}

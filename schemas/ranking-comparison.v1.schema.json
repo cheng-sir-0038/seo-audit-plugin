@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:ranking-comparison:v1",
+  "title": "Codex SEO Ranking Comparison v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "propertyUrl",
+    "query",
+    "priorWindow",
+    "currentWindow",
+    "prior",
+    "current",
+    "pages",
+    "priorRankingPages",
+    "currentRankingPages",
+    "targetPage",
+    "targetPagePriorState",
+    "targetPageCurrentState",
+    "warnings"
+  ],
+  "properties": {
+    "propertyUrl": {"type": "string", "minLength": 1},
+    "query": {"type": "string", "minLength": 1},
+    "priorWindow": {"$ref": "#/$defs/window"},
+    "currentWindow": {"$ref": "#/$defs/window"},
+    "prior": {"$ref": "#/$defs/nullableSummary"},
+    "current": {"$ref": "#/$defs/nullableSummary"},
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["page", "prior", "current"],
+        "properties": {
+          "page": {"type": "string", "minLength": 1},
+          "prior": {"$ref": "#/$defs/nullableSummary"},
+          "current": {"$ref": "#/$defs/nullableSummary"}
+        }
+      }
+    },
+    "priorRankingPages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "currentRankingPages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "targetPage": {"type": ["string", "null"], "minLength": 1},
+    "targetPagePriorState": {"enum": ["observed", "not-observed", "unknown"]},
+    "targetPageCurrentState": {"enum": ["observed", "not-observed", "unknown"]},
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startDate", "endDate"],
+      "properties": {
+        "startDate": {"type": "string", "format": "date"},
+        "endDate": {"type": "string", "format": "date"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clicks", "impressions", "ctr", "position"],
+      "properties": {
+        "clicks": {"type": "number", "minimum": 0},
+        "impressions": {"type": "number", "minimum": 0},
+        "ctr": {"type": ["number", "null"], "minimum": 0},
+        "position": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "nullableSummary": {
+      "anyOf": [
+        {"$ref": "#/$defs/summary"},
+        {"type": "null"}
+      ]
+    }
+  }
+}

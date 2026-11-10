@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "seo-audit-plugin",
+  "version": "0.2.2",
+  "description": "Portable, evidence-driven SEO audit, ranking diagnosis, keyword opportunity research, organic-traffic analysis, and handoff capabilities for agent hosts.",
+  "author": {
+    "name": "Chengpeng"
+  },
+  "keywords": [
+    "seo",
+    "technical-seo",
+    "ranking-diagnosis",
+    "keyword-research",
+    "keyword-opportunity",
+    "search-performance",
+    "ga4",
+    "web-analytics",
+    "agent-plugin"
+  ]
+}

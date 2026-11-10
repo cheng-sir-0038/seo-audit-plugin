@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:hreflang-assessment:v1",
+  "title": "Codex SEO Hreflang Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "pagesChecked", "xDefaultPresent", "issues", "unknownTargets", "reasons", "confidence"],
+  "properties": {
+    "state": {"enum": ["healthy", "issues_found", "insufficient_evidence"]},
+    "pagesChecked": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "xDefaultPresent": {"type": "boolean"},
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "pageUrl", "hreflang", "targetUrl", "summary"],
+        "properties": {
+          "code": {"type": "string", "minLength": 1},
+          "pageUrl": {"type": "string", "minLength": 1},
+          "hreflang": {"type": ["string", "null"], "minLength": 1},
+          "targetUrl": {"type": ["string", "null"], "minLength": 1},
+          "summary": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "unknownTargets": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "confidence": {"enum": ["high", "medium", "low"]}
+  }
+}

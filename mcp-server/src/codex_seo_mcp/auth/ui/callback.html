@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{{title}}</title>
+  <style>{{bootstrap_css}}</style>
+  <style>{{callback_css}}</style>
+</head>
+<body>
+  <main class="oauth-shell container d-flex align-items-center justify-content-center min-vh-100 py-4">
+    <section class="oauth-card card border-0 shadow-sm w-100" aria-labelledby="oauth-title">
+      <div class="card-body p-4 p-sm-5">
+        <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+          <span class="oauth-brand fw-semibold">Codex SEO</span>
+          <span class="badge rounded-pill text-bg-light border">{{provider_name}}</span>
+        </div>
+        <div class="oauth-status-icon {{status_class}} mb-4" aria-hidden="true">{{status_icon}}</div>
+        <h1 id="oauth-title" class="h3 fw-semibold mb-3">{{title}}</h1>
+        <p class="lead fs-6 text-body-secondary mb-4">{{message}}</p>
+        <div class="oauth-account rounded-3 border p-3 mb-4">
+          <div class="small text-body-secondary mb-1">连接账号</div>
+          <div class="fw-medium">{{account_name}}</div>
+        </div>
+        <p class="small text-body-secondary mb-0">{{footer}}</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

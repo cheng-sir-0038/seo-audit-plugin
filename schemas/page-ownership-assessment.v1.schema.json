@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:page-ownership-assessment:v1",
+  "title": "Codex SEO Page Ownership Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "query",
+    "market",
+    "ownershipState",
+    "targetPage",
+    "targetPageState",
+    "currentOwner",
+    "previousOwner",
+    "currentRankingPages",
+    "previousRankingPages",
+    "switchingObserved",
+    "visibilityImpact",
+    "observations",
+    "pairEvidence",
+    "reasons",
+    "unknowns",
+    "recommendedAction",
+    "confidence"
+  ],
+  "properties": {
+    "query": {"type": "string", "minLength": 1},
+    "market": {"type": "string", "minLength": 1},
+    "ownershipState": {
+      "enum": [
+        "stable_owner",
+        "intent_split",
+        "page_switching",
+        "probable_cannibalization",
+        "insufficient_evidence"
+      ]
+    },
+    "targetPage": {"type": ["string", "null"], "minLength": 1},
+    "targetPageState": {"enum": ["matched", "mismatched", "unknown"]},
+    "currentOwner": {"type": ["string", "null"], "minLength": 1},
+    "previousOwner": {"type": ["string", "null"], "minLength": 1},
+    "currentRankingPages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "previousRankingPages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "switchingObserved": {"type": "boolean"},
+    "visibilityImpact": {"enum": ["negative", "neutral", "positive", "unknown"]},
+    "observations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/observation"}
+    },
+    "pairEvidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/pairEvidence"}
+    },
+    "reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "unknowns": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "recommendedAction": {
+      "enum": [
+        "keep_or_strengthen_owner",
+        "keep_roles_distinct",
+        "reassess_target_page",
+        "clarify_page_roles",
+        "consolidate_or_differentiate",
+        "monitor",
+        "collect_role_evidence"
+      ]
+    },
+    "confidence": {"enum": ["high", "medium", "low"]}
+  },
+  "$defs": {
+    "nullablePosition": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "currentPosition",
+        "previousPosition",
+        "currentObserved",
+        "previousObserved"
+      ],
+      "properties": {
+        "url": {"type": "string", "minLength": 1},
+        "currentPosition": {"$ref": "#/$defs/nullablePosition"},
+        "previousPosition": {"$ref": "#/$defs/nullablePosition"},
+        "currentObserved": {"type": "boolean"},
+        "previousObserved": {"type": "boolean"}
+      }
+    },
+    "pairEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pageA", "pageB", "roleRelation", "contentOverlap"],
+      "properties": {
+        "pageA": {"type": "string", "minLength": 1},
+        "pageB": {"type": "string", "minLength": 1},
+        "roleRelation": {"enum": ["same", "distinct", "unknown"]},
+        "contentOverlap": {"enum": ["high", "medium", "low", "unknown"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "seo-data": {
+      "type": "stdio",
+      "command": "./mcp-server/run.sh",
+      "cwd": "."
+    }
+  }
+}

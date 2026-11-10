@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codex-seo:structured-data-assessment:v1",
+  "title": "Codex SEO Structured Data Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pageUrl",
+    "state",
+    "jsonLdBlockCount",
+    "validJsonLdBlocks",
+    "invalidJsonLdBlocks",
+    "observedTypes",
+    "expectedTypes",
+    "issues",
+    "unknowns",
+    "reasons",
+    "confidence"
+  ],
+  "properties": {
+    "pageUrl": {"type": "string", "minLength": 1},
+    "state": {"enum": ["markup_present", "issues_found", "no_markup", "insufficient_evidence"]},
+    "jsonLdBlockCount": {"type": "integer", "minimum": 0},
+    "validJsonLdBlocks": {"type": "integer", "minimum": 0},
+    "invalidJsonLdBlocks": {"type": "integer", "minimum": 0},
+    "observedTypes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "expectedTypes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "summary", "blockIndex", "schemaType"],
+        "properties": {
+          "code": {"type": "string", "minLength": 1},
+          "summary": {"type": "string", "minLength": 1},
+          "blockIndex": {"type": ["integer", "null"], "minimum": 0},
+          "schemaType": {"type": ["string", "null"], "minLength": 1}
+        }
+      }
+    },
+    "unknowns": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "confidence": {"enum": ["high", "medium", "low"]}
+  }
+}
