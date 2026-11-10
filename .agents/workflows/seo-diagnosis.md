@@ -9,4 +9,6 @@
 
 对应 Skill 按问题选择 [`references/`](../../references/) 中的判断规则，并通过 [`mcp-server/`](../../mcp-server/) 读取所需数据。结论应区分已观察事实、推断和缺失证据；证据不足时不要编造。
 
+基础站点检查可调用 MCP 工具 `inspect_site_basics`；其实现位于 [`mcp-server/src/codex_seo_mcp/workflows/site_audit.py`](../../mcp-server/src/codex_seo_mcp/workflows/site_audit.py)，实际读取页面、robots.txt 和最多一个同站 sitemap，并分别返回执行结果。
+
 插件在诊断、建议和交接处结束。目标项目的修改、测试、构建和发布由宿主在获得相应授权后处理；插件不自行执行这些操作。

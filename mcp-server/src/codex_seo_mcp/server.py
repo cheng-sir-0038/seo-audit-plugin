@@ -28,6 +28,7 @@ from codex_seo_mcp.tool_metadata import (
     READ_ONLY_LOCAL,
     READ_ONLY_OPEN_WORLD,
 )
+from codex_seo_mcp.workflows.site_audit import inspect_site_basics as run_site_basics
 
 mcp = MCPServer(
     "Codex SEO",
@@ -118,6 +119,17 @@ async def inspect_page(url: str) -> dict[str, Any]:
     """
 
     return (await _page_inspection.inspect(url)).to_dict()
+
+
+@mcp.tool(annotations=READ_ONLY_OPEN_WORLD, title="网站 SEO 基础检查")
+@observe_tool(tool="inspect_site_basics", target_arg="url")
+@map_seo_data_errors
+async def inspect_site_basics(url: str) -> dict[str, Any]:
+    """只读检查一个页面、robots.txt 和最多一个同站 sitemap。
+
+    返回各项事实和失败原因；不等于整站爬取，也不能证明 Google 收录状态。
+    """
+    return await run_site_basics(url, _page_inspection, _resource_inspection)
 
 
 @mcp.tool(annotations=READ_ONLY_OPEN_WORLD, title="富媒体结果检查")

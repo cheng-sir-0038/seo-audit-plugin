@@ -39,6 +39,8 @@ Prefer the repository's existing mechanisms over inventing a parallel SEO layer.
 
 When live or local runtime evidence exists, verify the delivered behavior instead of relying on code intent. Use `PageInspection` for current HTML, `ResourceInspection` for robots.txt/sitemaps, `IndexInspection` for Google's indexed-state facts when GSC is available, and `PageQuality` only when page quality is materially relevant.
 
+For an explicitly requested basic site check, call `inspect_site_basics` to collect one page, robots.txt, and at most one same-origin sitemap. Treat each returned error or non-2xx response as a gap; the workflow does not prove site-wide coverage or Google indexing. If the combined tool is unavailable, use the individual page and resource tools where available.
+
 For internal-link or pagination questions, use `PageInspection.anchor_links / rel_next_urls / rel_prev_urls` only for the inspected page. Treat orphan/depth/inlink-count or domain-wide link claims as unavailable without a site-wide graph; do not extrapolate them from one page.
 
 When a finding depends on page purpose, use the user's already-stated intent or ask the smallest question that changes the recommendation. For example, an observed `noindex` needs a distinction between a page intended for search and one intentionally excluded. Follow the mid-task clarification guidance in `technical-seo-checks.md`; a business answer is not permission to edit or publish.

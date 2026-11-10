@@ -62,6 +62,7 @@ class McpServerTests(unittest.IsolatedAsyncioTestCase):
                         "inspect_google_index",
                         "inspect_page",
                         "inspect_robots_sitemap",
+                        "inspect_site_basics",
                         "list_analytics_properties",
                         "list_search_console_sites",
                         "research_competitors",
@@ -71,6 +72,7 @@ class McpServerTests(unittest.IsolatedAsyncioTestCase):
                 )
                 titles = {tool.name: tool.title for tool in listed.tools}
                 self.assertEqual(titles["inspect_page"], "页面 SEO 检查")
+                self.assertEqual(titles["inspect_site_basics"], "网站 SEO 基础检查")
                 self.assertEqual(titles["inspect_google_index"], "Google 收录检查")
                 self.assertEqual(titles["inspect_robots_sitemap"], "Robots / Sitemap 检查")
                 self.assertEqual(titles["check_page_performance"], "页面性能检查")
@@ -160,6 +162,7 @@ class McpServerTests(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertIn("url", site_safety.input_schema.get("required", []))
                 inspect_page_tool = next(tool for tool in listed.tools if tool.name == "inspect_page")
+                site_basics = next(tool for tool in listed.tools if tool.name == "inspect_site_basics")
                 connect_gsc_tool = next(
                     tool for tool in listed.tools if tool.name == "connect_search_console"
                 )
@@ -168,6 +171,9 @@ class McpServerTests(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertTrue(inspect_page_tool.annotations.read_only_hint)
                 self.assertTrue(inspect_page_tool.annotations.open_world_hint)
+                self.assertTrue(site_basics.annotations.read_only_hint)
+                self.assertTrue(site_basics.annotations.open_world_hint)
+                self.assertIn("url", site_basics.input_schema.get("required", []))
                 self.assertTrue(check_gsc_tool.annotations.read_only_hint)
                 self.assertFalse(check_gsc_tool.annotations.open_world_hint)
                 self.assertFalse(connect_gsc_tool.annotations.read_only_hint)

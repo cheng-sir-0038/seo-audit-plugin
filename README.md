@@ -20,11 +20,18 @@ skills/                       不同 SEO 问题的处理步骤
 references/                   运行时需要的判断规则
 mcp.json / .mcp.json          MCP 服务启动配置
 mcp-server/                   Python 数据服务及测试
+mcp-server/src/codex_seo_mcp/workflows/  可执行的只读 SEO 检查流程
 schemas/                      版本化诊断交接格式
 evals/                        本地确定性评测
 ```
 
 `skills/` 和 `references/` 是插件运行所需的内容。插件只读取和分析网站数据，不直接修改目标网站或发布内容。
+
+## 基础 SEO 体检
+
+插件加载到支持 MCP 的宿主后，可要求对一个 URL 做基础 SEO 体检。`technical-seo-audit` Skill 可调用 `inspect_site_basics`，依次读取页面、`robots.txt` 和最多一个同站 sitemap，并分别返回每一步的证据或失败原因。它不调用收费 SEO 数据接口，也不修改网站。
+
+此流程只检查一个页面和一个 sitemap；如果存在多个或跨站 sitemap，会明确提示未覆盖的部分。资源请求会沿用现有的安全重定向检查；若跳转到其他站点，结果会标记为部分完成。它不能证明整站的抓取情况或 Google 收录状态。更完整的诊断仍需结合 Skill、其他工具和实际可用的数据来源。
 
 ## 本地安装到 Codex
 
